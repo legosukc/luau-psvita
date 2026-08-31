@@ -444,11 +444,13 @@ target_sources(Luau.VM PRIVATE
     VM/src/lvm.h
 )
 
+#[[
 target_sources(isocline PRIVATE
     extern/isocline/include/isocline.h
     extern/isocline/src/isocline.c
-)
+)]]
 
+#[[
 # Common sources shared between all CLI apps
 target_sources(Luau.CLI.lib PRIVATE
     CLI/include/Luau/FileUtils.h
@@ -493,6 +495,7 @@ if(TARGET Luau.Ast.CLI)
         CLI/src/Ast.cpp
     )
 endif()
+]]
 
 if(TARGET Luau.UnitTest)
     # Luau.UnitTest Sources
@@ -612,6 +615,7 @@ if(TARGET Luau.Conformance)
         tests/main.cpp)
 endif()
 
+#[[
 if(TARGET Luau.CLI.Test)
     # Luau.CLI.Test Sources
     target_sources(Luau.CLI.Test PRIVATE
@@ -632,6 +636,7 @@ if(TARGET Luau.CLI.Test)
         tests/RequireByString.test.cpp
         tests/main.cpp)
 endif()
+    ]]
 
 if(TARGET Luau.Require)
     # Luau.Require Sources
@@ -655,6 +660,7 @@ if(TARGET Luau.Require)
     Require/src/RequireNavigator.cpp)
 endif()
 
+#[[
 if(TARGET Luau.Web)
     # Luau.Web Sources
     target_sources(Luau.Web PRIVATE
@@ -679,3 +685,4 @@ if(TARGET Luau.Bytecode.CLI)
     target_sources(Luau.Bytecode.CLI PRIVATE
         CLI/src/Bytecode.cpp)
 endif()
+]]

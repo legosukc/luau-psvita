@@ -14,13 +14,18 @@ if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
   endif()
 endif()
 
-option(LUAU_BUILD_CLI "Build CLI" ON)
+#option(LUAU_BUILD_CLI "Build CLI" OFF)
 option(LUAU_BUILD_TESTS "Build tests" ON)
 option(LUAU_BUILD_WEB "Build Web module" OFF)
 option(LUAU_WERROR "Warnings as errors" OFF)
 option(LUAU_STATIC_CRT "Link with the static CRT (/MT)" OFF)
 option(LUAU_EXTERN_C "Use extern C for all APIs" OFF)
 option(LUAU_BUILD_SHARED "Build as a shared library" OFF)
+
+# new
+#set(LUAU_BUILD_CLI OFF CACHE INTERNAL "")
+set(LUAU_BUILD_TESTS OFF CACHE INTERNAL "")
+
 
 if(LUAU_BUILD_SHARED AND NOT LUAU_EXTERN_C)
     message(FATAL_ERROR "LUAU_BUILD_SHARED requires LUAU_EXTERN_C to be ON")
@@ -41,7 +46,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (LUAU_BUILD_SHARED)
     add_library(Luau.Common SHARED)
-    add_library(Luau.CLI.lib SHARED)
+    #add_library(Luau.CLI.lib SHARED)
     add_library(Luau.Ast SHARED)
     add_library(Luau.Bytecode SHARED)
     add_library(Luau.Inliner SHARED)
@@ -51,10 +56,10 @@ if (LUAU_BUILD_SHARED)
     add_library(Luau.CodeGen SHARED)
     add_library(Luau.VM SHARED)
     add_library(Luau.Require SHARED)
-    add_library(isocline SHARED)
+    #add_library(isocline SHARED)
 else()
     add_library(Luau.Common STATIC)
-    add_library(Luau.CLI.lib STATIC)
+    #add_library(Luau.CLI.lib STATIC)
     add_library(Luau.Ast STATIC)
     add_library(Luau.Bytecode STATIC)
     add_library(Luau.Inliner STATIC)
@@ -64,9 +69,10 @@ else()
     add_library(Luau.CodeGen STATIC)
     add_library(Luau.VM STATIC)
     add_library(Luau.Require STATIC)
-    add_library(isocline STATIC)
+    #add_library(isocline STATIC)
 endif()
 
+#[[
 if(LUAU_BUILD_CLI)
     add_executable(Luau.Repl.CLI)
     add_executable(Luau.Analyze.CLI)
@@ -83,11 +89,12 @@ if(LUAU_BUILD_CLI)
     set_target_properties(Luau.Compile.CLI PROPERTIES OUTPUT_NAME luau-compile)
     set_target_properties(Luau.Bytecode.CLI PROPERTIES OUTPUT_NAME luau-bytecode)
 endif()
+]]
 
 if(LUAU_BUILD_TESTS)
     add_executable(Luau.UnitTest)
     add_executable(Luau.Conformance)
-    add_executable(Luau.CLI.Test)
+    #add_executable(Luau.CLI.Test)
 endif()
 
 if(LUAU_BUILD_WEB)
@@ -102,9 +109,9 @@ include(Sources.cmake)
 target_compile_features(Luau.Common PUBLIC cxx_std_17)
 target_include_directories(Luau.Common PUBLIC Common/include)
 
-target_compile_features(Luau.CLI.lib PUBLIC cxx_std_17)
-target_include_directories(Luau.CLI.lib PUBLIC CLI/include)
-target_link_libraries(Luau.CLI.lib PRIVATE Luau.Common Luau.Config)
+#target_compile_features(Luau.CLI.lib PUBLIC cxx_std_17)
+#target_include_directories(Luau.CLI.lib PUBLIC CLI/include)
+#target_link_libraries(Luau.CLI.lib PRIVATE Luau.Common Luau.Config)
 
 target_compile_features(Luau.Ast PUBLIC cxx_std_17)
 target_include_directories(Luau.Ast PUBLIC Ast/include)
@@ -148,7 +155,7 @@ target_compile_features(Luau.Require PUBLIC cxx_std_17)
 target_include_directories(Luau.Require PUBLIC Require/include)
 target_link_libraries(Luau.Require PUBLIC Luau.Config Luau.VM)
 
-target_include_directories(isocline PUBLIC extern/isocline/include)
+#target_include_directories(isocline PUBLIC extern/isocline/include)
 
 target_include_directories(Luau.VM.Internals INTERFACE VM/src)
 
@@ -198,10 +205,10 @@ endif()
 
 target_compile_options(Luau.Ast PRIVATE ${LUAU_OPTIONS})
 target_compile_options(Luau.Analysis PRIVATE ${LUAU_OPTIONS})
-target_compile_options(Luau.CLI.lib PRIVATE ${LUAU_OPTIONS})
+#target_compile_options(Luau.CLI.lib PRIVATE ${LUAU_OPTIONS})
 target_compile_options(Luau.CodeGen PRIVATE ${LUAU_OPTIONS})
 target_compile_options(Luau.VM PRIVATE ${LUAU_OPTIONS})
-target_compile_options(isocline PRIVATE ${LUAU_OPTIONS} ${ISOCLINE_OPTIONS})
+#target_compile_options(isocline PRIVATE ${LUAU_OPTIONS} ${ISOCLINE_OPTIONS})
 
 if(LUAU_EXTERN_C)
     # enable extern "C" for VM (lua.h, lualib.h) and Compiler (luacode.h) to make Luau friendlier to use from non-C++ languages
@@ -238,18 +245,19 @@ if (NOT MSVC)
     target_compile_options(Luau.VM PRIVATE -fno-math-errno)
 endif()
 
+#[[
 if(MSVC AND LUAU_BUILD_CLI)
     # the default stack size that MSVC linker uses is 1 MB; we need more stack space in Debug because stack frames are larger
     set_target_properties(Luau.Analyze.CLI PROPERTIES LINK_FLAGS_DEBUG /STACK:2097152)
     set_target_properties(Luau.Repl.CLI PROPERTIES LINK_FLAGS_DEBUG /STACK:2097152)
     set_target_properties(Luau.UnitTest PROPERTIES LINK_FLAGS_DEBUG /STACK:2097152)
-endif()
+endif()]]
 
 if(MSVC AND LUAU_BUILD_TESTS)
     # the default stack size that MSVC linker uses is 1 MB; we need more stack space in Debug because stack frames are larger
-    set_target_properties(Luau.CLI.Test PROPERTIES LINK_FLAGS_DEBUG /STACK:2097152)
+    #set_target_properties(Luau.CLI.Test PROPERTIES LINK_FLAGS_DEBUG /STACK:2097152)
     set_target_properties(Luau.Conformance PROPERTIES LINK_FLAGS_DEBUG /STACK:2097152)
-    set_target_properties(Luau.CLI.Test PROPERTIES LINK_FLAGS_OPTIMIZED /STACK:2097152)
+    #set_target_properties(Luau.CLI.Test PROPERTIES LINK_FLAGS_OPTIMIZED /STACK:2097152)
     set_target_properties(Luau.Conformance PROPERTIES LINK_FLAGS_OPTIMIZED /STACK:2097152)
 endif()
 
@@ -275,6 +283,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux|Darwin|iOS")
     target_link_libraries(osthreads INTERFACE "-lpthread")
 endif ()
 
+#[[
 if(LUAU_BUILD_CLI)
     target_compile_options(Luau.Repl.CLI PRIVATE ${LUAU_OPTIONS})
     target_compile_options(Luau.Reduce.CLI PRIVATE ${LUAU_OPTIONS})
@@ -305,7 +314,7 @@ if(LUAU_BUILD_CLI)
     target_link_libraries(Luau.Compile.CLI PRIVATE Luau.Compiler Luau.VM Luau.CodeGen Luau.CLI.lib)
 
     target_link_libraries(Luau.Bytecode.CLI PRIVATE Luau.Compiler Luau.VM Luau.CodeGen Luau.CLI.lib)
-endif()
+endif()]]
 
 if(LUAU_BUILD_TESTS)
     target_compile_options(Luau.UnitTest PRIVATE ${LUAU_OPTIONS})
@@ -324,11 +333,13 @@ if(LUAU_BUILD_TESTS)
     endif ()
     target_compile_definitions(Luau.Conformance PRIVATE LUAU_CONFORMANCE_SOURCE_DIR="${LUAU_CONFORMANCE_SOURCE_DIR}")
 
+    #[[
     target_compile_options(Luau.CLI.Test PRIVATE ${LUAU_OPTIONS})
     target_compile_definitions(Luau.CLI.Test PRIVATE DOCTEST_CONFIG_USE_STD_HEADERS)
     target_include_directories(Luau.CLI.Test PRIVATE extern CLI)
     target_link_libraries(Luau.CLI.Test PRIVATE Luau.Compiler Luau.Inliner Luau.Config Luau.CodeGen Luau.VM Luau.Require Luau.CLI.lib isocline)
     target_link_libraries(Luau.CLI.Test PRIVATE osthreads)
+]]
 
     add_subdirectory(fuzz)
 endif()
