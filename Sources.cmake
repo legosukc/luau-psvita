@@ -1,3 +1,5 @@
+# commented out sources are either CLI or isocline idk
+
 # Luau.Common Sources
 target_sources(Luau.Common PRIVATE
     Common/include/Luau/Common.h
