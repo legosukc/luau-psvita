@@ -6,6 +6,14 @@ endif()
 
 cmake_minimum_required(VERSION 3.10)
 
+if(NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  if(DEFINED ENV{VITASDK})
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{VITASDK}/share/vita.toolchain.cmake" CACHE PATH "toolchain file")
+  else()
+    message(FATAL_ERROR "Please define VITASDK to point to your SDK path!")
+  endif()
+endif()
+
 option(LUAU_BUILD_CLI "Build CLI" ON)
 option(LUAU_BUILD_TESTS "Build tests" ON)
 option(LUAU_BUILD_WEB "Build Web module" OFF)
@@ -27,6 +35,9 @@ if(LUAU_STATIC_CRT)
 endif()
 
 project(Luau LANGUAGES CXX C)
+include("${VITASDK}/share/vita.cmake" REQUIRED)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (LUAU_BUILD_SHARED)
     add_library(Luau.Common SHARED)
@@ -125,6 +136,7 @@ target_link_libraries(Luau.Analysis PRIVATE Luau.Compiler Luau.VM)
 
 target_compile_features(Luau.CodeGen PRIVATE cxx_std_17)
 target_include_directories(Luau.CodeGen PUBLIC CodeGen/include)
+target_include_directories(Luau.CodeGen PUBLIC ${VITASDK}/arm-vita-eabi/include)
 target_link_libraries(Luau.CodeGen PRIVATE Luau.VM Luau.VM.Internals) # Code generation needs VM internals
 target_link_libraries(Luau.CodeGen PUBLIC Luau.Common)
 

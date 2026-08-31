@@ -13,6 +13,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <climits>
 
 #ifdef _MSC_VER
 #include <intrin.h>
