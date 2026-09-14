@@ -1,3 +1,5 @@
+# commented out sources are either CLI or isocline idk
+
 # Luau.Common Sources
 target_sources(Luau.Common PRIVATE
     Common/include/Luau/Common.h
@@ -444,11 +446,13 @@ target_sources(Luau.VM PRIVATE
     VM/src/lvm.h
 )
 
+#[[
 target_sources(isocline PRIVATE
     extern/isocline/include/isocline.h
     extern/isocline/src/isocline.c
-)
+)]]
 
+#[[
 # Common sources shared between all CLI apps
 target_sources(Luau.CLI.lib PRIVATE
     CLI/include/Luau/FileUtils.h
@@ -493,6 +497,7 @@ if(TARGET Luau.Ast.CLI)
         CLI/src/Ast.cpp
     )
 endif()
+]]
 
 if(TARGET Luau.UnitTest)
     # Luau.UnitTest Sources
@@ -575,7 +580,7 @@ if(TARGET Luau.UnitTest)
         tests/TypeInfer.loops.test.cpp
         tests/TypeInfer.modules.test.cpp
         tests/TypeInfer.negations.test.cpp
-        tests/TypeInfer.metatableOOP.test.cpp
+        tests/TypeInfer.oop.test.cpp
         tests/TypeInfer.operators.test.cpp
         tests/TypeInfer.primitives.test.cpp
         tests/TypeInfer.provisional.test.cpp
@@ -601,7 +606,6 @@ endif()
 if(TARGET Luau.Conformance)
     # Luau.Conformance Sources
     target_sources(Luau.Conformance PRIVATE
-        tests/BufferCage.h
         tests/RegisterCallbacks.h
         tests/RegisterCallbacks.cpp
         tests/ConformanceIrHooks.h
@@ -613,6 +617,7 @@ if(TARGET Luau.Conformance)
         tests/main.cpp)
 endif()
 
+#[[
 if(TARGET Luau.CLI.Test)
     # Luau.CLI.Test Sources
     target_sources(Luau.CLI.Test PRIVATE
@@ -627,15 +632,13 @@ if(TARGET Luau.CLI.Test)
         CLI/src/Repl.cpp
         CLI/src/ReplRequirer.cpp
 
-        tests/ClassRuntimeErrors.test.cpp
-        tests/ReplWithPathFixture.h
-        tests/ReplWithPathFixture.cpp
         tests/RegisterCallbacks.h
         tests/RegisterCallbacks.cpp
         tests/Repl.test.cpp
         tests/RequireByString.test.cpp
         tests/main.cpp)
 endif()
+    ]]
 
 if(TARGET Luau.Require)
     # Luau.Require Sources
@@ -659,6 +662,7 @@ if(TARGET Luau.Require)
     Require/src/RequireNavigator.cpp)
 endif()
 
+#[[
 if(TARGET Luau.Web)
     # Luau.Web Sources
     target_sources(Luau.Web PRIVATE
@@ -683,3 +687,4 @@ if(TARGET Luau.Bytecode.CLI)
     target_sources(Luau.Bytecode.CLI PRIVATE
         CLI/src/Bytecode.cpp)
 endif()
+]]

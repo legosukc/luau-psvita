@@ -5,33 +5,13 @@
 
 #include <string.h>
 
+#include <psp2/kernel/sysmem.h>
+#include <psp2kern/kernel/sysmem/memtype.h>
+#include <psp2kern/kernel/sysmem.h>
+
 LUAU_FASTFLAGVARIABLE(LuauCodegenProtectData)
 
-#if defined(_WIN32)
-
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
-
 const size_t kPageSize = 4096;
-#else
-#include <sys/mman.h>
-#include <unistd.h>
-
-#if defined(__FreeBSD__) && !(_POSIX_C_SOURCE >= 200112L)
-const size_t kPageSize = getpagesize();
-#else
-const size_t kPageSize = sysconf(_SC_PAGESIZE);
-#endif
-#endif
-
-#ifdef __APPLE__
-extern "C" void sys_icache_invalidate(void* start, size_t len);
-#endif
 
 
 #if defined(_WIN32)
@@ -87,47 +67,73 @@ static void flushInstructionCache(uint8_t* mem, size_t size)
 #else
 static uint8_t* allocatePagesImpl(size_t size)
 {
+    size += kPageSize;
     CODEGEN_ASSERT(size == Luau::CodeGen::CodeAllocator::alignToPageSize(size));
 
+    // SceKernelAllocMemBlockKernelOpt memblockOptions;
+    SceUID block_id = ksceKernelAllocMemBlock("LUAUCODEBLOCK", SCE_KERNEL_MEMBLOCK_TYPE_KERNEL_RW, size, NULL); //&memblockOptions);
+    if (block_id < 0)
+    {
+        return nullptr;
+    }
+
+    void* result;
+    if (ksceKernelGetMemBlockBase(block_id, &result) < 0)
+    {
+        return nullptr;
+    }
+    *(static_cast<SceUID*>(result) - sizeof(SceUID)) = block_id;
+    return static_cast<uint8_t*>(result) + kPageSize;
+    /*
 #ifdef __APPLE__
-    void* result = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
+    result = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_JIT, -1, 0);
 #else
-    void* result = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+    result = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
 #endif
 
-    return (result == MAP_FAILED) ? nullptr : static_cast<uint8_t*>(result);
+    return (block_id < 0)
+    ? nullptr
+    : static_cast<uint8_t*>(result);*/
 }
 
 static void freePagesImpl(uint8_t* mem, size_t size)
 {
     CODEGEN_ASSERT(size == Luau::CodeGen::CodeAllocator::alignToPageSize(size));
 
+    if (ksceKernelFreeMemBlock(*(reinterpret_cast<SceUID*>(mem) - sizeof(SceUID))) < 0)
+    {
+        CODEGEN_ASSERT(!"Failed to deallocate block memory");
+    }
+    /*
     if (munmap(mem, size) != 0)
         CODEGEN_ASSERT(!"Failed to deallocate block memory");
+        */
 }
 
 [[nodiscard]] static bool makePagesExecutable(uint8_t* mem, size_t size)
 {
     CODEGEN_ASSERT((uintptr_t(mem) & (kPageSize - 1)) == 0);
     CODEGEN_ASSERT(size == Luau::CodeGen::CodeAllocator::alignToPageSize(size));
-
-    return mprotect(mem, size, PROT_READ | PROT_EXEC) == 0;
+    return ksceKernelRemapMemBlock(*(reinterpret_cast<SceUID*>(mem) - sizeof(SceUID)), SCE_KERNEL_MEMBLOCK_TYPE_USER_RX) == 0;
+    // return mprotect(mem, size, PROT_READ | PROT_EXEC) == 0;
 }
 
 [[nodiscard]] static bool makePagesNotExecutable(uint8_t* mem, size_t size)
 {
     CODEGEN_ASSERT((uintptr_t(mem) & (kPageSize - 1)) == 0);
     CODEGEN_ASSERT(size == Luau::CodeGen::CodeAllocator::alignToPageSize(size));
-
-    return mprotect(mem, size, PROT_READ | PROT_WRITE) == 0;
+    return ksceKernelRemapMemBlock(*(reinterpret_cast<SceUID*>(mem) - sizeof(SceUID)), SCE_KERNEL_MEMBLOCK_TYPE_USER_RW) == 0;
+    // return mprotect(mem, size, PROT_READ | PROT_WRITE) == 0;
 }
 
+// function DOESN'T make it readonly, it makes it read and execute bc i don't think the ps vita supports read only memory :(
 [[nodiscard]] static bool makePagesReadOnly(uint8_t* mem, size_t size)
 {
     CODEGEN_ASSERT((uintptr_t(mem) & (kPageSize - 1)) == 0);
     CODEGEN_ASSERT(size == Luau::CodeGen::CodeAllocator::alignToPageSize(size));
 
-    return mprotect(mem, size, PROT_READ) == 0;
+    return ksceKernelRemapMemBlock(*(reinterpret_cast<SceUID*>(mem) - sizeof(SceUID)), SCE_KERNEL_MEMBLOCK_TYPE_USER_RX) == 0;
+    // return mprotect(mem, size, PROT_READ) == 0;
 }
 
 static void flushInstructionCache(uint8_t* mem, size_t size)
